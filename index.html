@@ -28,6 +28,7 @@
   --nav:#111113; --data:#E4E4E7; --timer:#232327; --timer-fill:#34343A; --timer-fg:#FFFFFF; color-scheme:dark;}
 *{box-sizing:border-box}
 html,body{background:var(--bg);color:var(--fg)}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{font-family:var(--font-body);font-size:16px;line-height:1.4;-webkit-tap-highlight-color:transparent;font-variant-numeric:tabular-nums}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
@@ -150,7 +151,10 @@ table.t td:last-child{text-align:right;font-weight:700}
 .linkbtn{background:none;border:none;color:var(--accent);font-weight:600;font-size:14px;padding:6px 0}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+.ss-tag{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.card.ss{box-shadow:inset 3px 0 0 var(--accent)}
 </style>
+<div id="splash" aria-hidden="true" style="position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .35s ease"><svg width="96" height="96" viewBox="0 0 100 100"><rect width="100" height="100" rx="24" fill="#D7261E"/><rect x="20" y="56" width="15" height="24" rx="3" fill="#FFFFFF"/><rect x="42" y="40" width="15" height="40" rx="3" fill="#FFFFFF"/><rect x="64" y="22" width="15" height="58" rx="3" fill="#FFFFFF"/></svg><span style="font-family:var(--font-display);font-weight:800;font-size:28px;letter-spacing:-.02em;color:var(--fg)">Série</span></div>
 <div id="root"></div>
 <div id="layer"></div>
 <script>
@@ -420,6 +424,10 @@ document.addEventListener('touchend', e => { if (!SW) return; const t = e.change
 /* ---------- partage de fichiers (iOS : Fichiers, iCloud…) ---------- */
 function canShareFiles(){ try { return !inIframe() && !!navigator.canShare && navigator.canShare({files:[new File(['x'], 't.json', {type:'application/json'})]}); } catch (e) { return false; } }
 function shareFile(name, text, type){ const f = new File([text], name, {type}); return navigator.share({files:[f], title:name}); }
+
+/* ---------- logo ---------- */
+function logo(size){ return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 100 100" role="img" aria-label="Série"><rect width="100" height="100" rx="24" fill="#D7261E"/><rect x="20" y="56" width="15" height="24" rx="3" fill="#FFFFFF"/><rect x="42" y="40" width="15" height="40" rx="3" fill="#FFFFFF"/><rect x="64" y="22" width="15" height="58" rx="3" fill="#FFFFFF"/></svg>'; }
+function hideSplash(){ const sp = document.getElementById('splash'); if (!sp) return; sp.style.opacity = '0'; setTimeout(() => sp.remove(), 350); }
 /* ================= AUJOURD'HUI ================= */
 function planFor(date){ const k = ((pd(date).getDay()+6)%7) + 1; return S.plan[k] || null; }
 function itemsOn(date){
@@ -439,7 +447,7 @@ function nextSuggestion(){
 }
 function viewToday(){
   const t = todayIso(); let h = '';
-  h += '<header class="row between"><div class="stack-s" style="gap:2px"><span class="muted small" style="font-weight:500">' + esc(fmtDay(t, {weekday:'long', day:'numeric', month:'long'})) + '</span><h1>' + (S.profile.name ? 'Salut ' + esc(S.profile.name) : 'Aujourd\'hui') + '</h1></div><button type="button" class="icon-btn" data-act="go" data-tab="settings" aria-label="Réglages">' + ic('gear') + '</button></header>';
+  h += '<header class="row between"><div class="row" style="gap:12px">' + logo(44) + '<div class="stack-s" style="gap:2px"><span class="muted small" style="font-weight:500">' + esc(fmtDay(t, {weekday:'long', day:'numeric', month:'long'})) + '</span><h1>' + (S.profile.name ? 'Salut ' + esc(S.profile.name) : 'Aujourd\'hui') + '</h1></div></div><button type="button" class="icon-btn" data-act="go" data-tab="settings" aria-label="Réglages">' + ic('gear') + '</button></header>';
   const hasData = S.sessions.length || S.weights.length || S.activities.length;
   const le = S.settings.lastExport;
   if (hasData && (!le || daysBetween(le.slice(0,10), t) >= 7)) h += '<div class="alert warn">' + ic('alert',20) + '<div class="grow stack-s"><span>' + (le ? 'Dernière sauvegarde il y a ' + daysBetween(le.slice(0,10), t) + ' jours.' : 'Tes données ne sont pas encore sauvegardées.') + '</span><button type="button" class="linkbtn" style="align-self:flex-start;color:var(--fg);text-decoration:underline" data-act="go" data-tab="settings">Sauvegarder maintenant</button></div></div>';
@@ -491,7 +499,7 @@ function weekVolumeCard(t){
   const total = Object.values(sm).reduce((a,b) => a + b, 0); const left = 6 - ((pd(t).getDay()+6)%7);
   let h = '<section class="card" style="padding:14px;gap:10px"><div class="row between" style="align-items:baseline"><span class="eyebrow">Séries cette semaine</span><span class="xs muted">' + total + ' séries · ' + nS + ' séance' + (nS>1?'s':'') + ' de muscu</span></div><div class="grid2" style="gap:10px 14px">';
   for (const m of list) { const v = sm[m]||0, tg = (S.targets[m]||[0,0])[0] || 1; const pc = clamp(v/tg, 0, 1); const ok = v >= tg;
-    h += '<div class="stack-s" style="gap:4px"><div class="row between small"><span style="font-weight:600">' + m + '</span><span style="' + (ok ? 'color:var(--good);font-weight:700' : 'color:var(--muted)') + '">' + v + '<span class="xs" style="color:var(--faint);font-weight:500"> / ' + tg + '</span></span></div><span class="hbar" style="height:6px"><span class="v" style="top:0;height:6px;width:' + (pc*100) + '%;background:' + (ok ? 'var(--good)' : 'var(--faint)') + '"></span></span></div>'; }
+    h += '<div class="stack-s" style="gap:4px"><div class="row between" style="align-items:baseline;font-size:14px;line-height:1.2"><span style="font-weight:600">' + m + '</span><span style="white-space:nowrap;font-size:14px;font-weight:700;color:' + (ok ? 'var(--good)' : 'var(--fg)') + '">' + v + '<span style="font-size:13px;font-weight:500;color:var(--faint)"> / ' + tg + '</span></span></div><span class="hbar" style="height:6px"><span class="v" style="top:0;height:6px;width:' + (pc*100) + '%;background:' + (ok ? 'var(--good)' : 'var(--faint)') + '"></span></span></div>'; }
   return h + '</div></section>';
 }
 function weighCard(t){
@@ -640,7 +648,7 @@ function viewTemplates(){
   return h;
 }
 function tplCard(t){
-  return '<div class="card" style="padding:14px;gap:10px' + (t.archived ? ';opacity:.7' : '') + '"><div class="row"><span class="dot" style="width:12px;height:12px;background:' + t.color + '"></span><span class="grow big" style="font-size:22px">' + esc(t.name) + '</span><button type="button" class="icon-btn" data-act="tplEdit" data-id="' + t.id + '" aria-label="Modifier ' + esc(t.name) + '">' + ic('edit',18) + '</button></div><div class="small muted">' + (t.items.length ? esc(t.items.map(i => (exById(i.exId)||{}).name).filter(Boolean).join(' · ')) : 'Aucun exercice') + '</div>' + (t.archived ? '' : '<button type="button" class="btn sm sec" data-act="start" data-tpl="' + t.id + '">' + ic('play',16,2.5) + 'Démarrer</button>') + '</div>';
+  return '<div class="card" style="padding:14px;gap:10px' + (t.archived ? ';opacity:.7' : '') + '"><div class="row"><span class="dot" style="width:12px;height:12px;background:' + t.color + '"></span><span class="grow big" style="font-size:22px">' + esc(t.name) + '</span><button type="button" class="icon-btn" data-act="tplEdit" data-id="' + t.id + '" aria-label="Modifier ' + esc(t.name) + '">' + ic('edit',18) + '</button></div><div class="small muted">' + (t.items.length ? t.items.map((i, k) => esc((exById(i.exId)||{}).name || '') + (i.ss && k < t.items.length - 1 ? ' <b style="color:var(--accent)">+</b> ' : k < t.items.length - 1 ? ' · ' : '')).join('') : 'Aucun exercice') + '</div>' + (t.archived ? '' : '<button type="button" class="btn sm sec" data-act="start" data-tpl="' + t.id + '">' + ic('play',16,2.5) + 'Démarrer</button>') + '</div>';
 }
 A.tplTab = el => { S.ui.tplTab = el.dataset.v; save(); render(); };
 CH.plan = el => { if (el.value) S.plan[el.dataset.d] = el.value; else delete S.plan[el.dataset.d]; save(); };
@@ -663,7 +671,7 @@ function tplEditor(){
       '<label class="field"><span>' + repLabel(ex) + ' min</span><input id="ti' + i + 'a" class="inp" inputmode="numeric" value="' + it.repMin + '" data-in="ti" data-i="' + i + '" data-f="repMin"></label>' +
       '<label class="field"><span>' + repLabel(ex) + ' max</span><input id="ti' + i + 'b" class="inp" inputmode="numeric" value="' + it.repMax + '" data-in="ti" data-i="' + i + '" data-f="repMax"></label>' +
       '<label class="field"><span>Repos</span><input id="ti' + i + 'r" class="inp" value="' + fTime(it.rest) + '" data-in="ti" data-i="' + i + '" data-f="rest"></label></div>' +
-      '<label class="field"><span>Note</span><input id="ti' + i + 'n" class="inp" value="' + esc(it.note||'') + '" placeholder="Ex. omoplates serrées" data-in="ti" data-i="' + i + '" data-f="note"></label></div>';
+      '<label class="field"><span>Note</span><input id="ti' + i + 'n" class="inp" value="' + esc(it.note||'') + '" placeholder="Ex. omoplates serrées" data-in="ti" data-i="' + i + '" data-f="note"></label>' + (i < t.items.length - 1 ? '<button type="button" class="chip' + (it.ss ? ' on' : '') + '" style="align-self:flex-start;height:32px;font-size:13px" data-act="tplSS" data-i="' + i + '" aria-pressed="' + !!it.ss + '">' + (it.ss ? '✓ En superset avec le suivant' : '+ Superset avec le suivant') + '</button>' : '') + '</div>';
   });
   h += '<button type="button" class="btn ghost full" data-act="pickEx" data-ctx="tpl">+ Ajouter un exercice</button></div>';
   if (!t._new) h += '<div class="grid2"><button type="button" class="btn sec" data-act="tplDup">Dupliquer</button><button type="button" class="btn sec" data-act="tplArchive">' + (t.archived ? 'Réactiver' : 'Archiver') + '</button></div><button type="button" class="btn danger full" data-act="tplDel">Supprimer la séance</button><p class="xs muted" style="margin:0">Archiver ou supprimer une séance ne touche pas à ton historique.</p>';
@@ -675,6 +683,7 @@ CH.tf = el => { if (el.dataset.f === 'transition') { const v = parseTime(el.valu
 CH.ti = el => { const it = TD.items[+el.dataset.i], f = el.dataset.f; if (f === 'note') it.note = el.value; else if (f === 'rest') { const v = parseTime(el.value); if (v !== null) it.rest = v; } else { const v = parseInt(el.value); if (!isNaN(v)) it[f] = v; } };
 A.tplColor = el => { TD.color = el.dataset.c; renderSheet(); };
 A.tplMove = el => { const i = +el.dataset.i, j = i + (+el.dataset.d); if (j < 0 || j >= TD.items.length) return; const x = TD.items[i]; TD.items[i] = TD.items[j]; TD.items[j] = x; renderSheet(); };
+A.tplSS = el => { const it = TD.items[+el.dataset.i]; it.ss = !it.ss; renderSheet(); };
 A.tplRm = el => { TD.items.splice(+el.dataset.i, 1); renderSheet(); };
 A.tplSave = () => {
   if (!TD.name.trim()) { toast('Donne un nom à la séance'); document.getElementById('tname').focus(); return; }
@@ -781,7 +790,7 @@ function buildEntry(exId, item, date){
   const orig = JSON.parse(JSON.stringify(sets));
   const dec = last ? last.entry.decision : null; let applied = null;
   if (last && (dec === 'up' || dec === 'down')) { sets.forEach(s => applyStep(ex, s, dec, target)); applied = dec; }
-  return {exId, sets, target, prev: prevSets.map(s => setLabel(ex, s)), applied, orig, decision:null};
+  return {exId, sets, target, prev: prevSets.map(s => setLabel(ex, s)), applied, orig, decision:null, ss: !!(item && item.ss)};
 }
 A.start = el => {
   if (S.active) { toast('Une séance est déjà en cours'); go('live'); return; }
@@ -794,7 +803,7 @@ function viewLive(){
   const a = S.active; let h = '<main class="app live">';
   h += '<header class="row between"><button type="button" class="icon-btn" data-act="go" data-tab="today" aria-label="Réduire la séance">' + ic('down') + '</button><div class="stack-s" style="align-items:center;gap:0"><span class="row" style="gap:6px;font-weight:700"><span class="dot" style="background:' + a.color + '"></span>' + esc(a.name) + '</span><span id="elapsed" class="muted" style="font-family:var(--font-display);font-size:20px;font-weight:600">' + fTime((Date.now()-a.start)/1000) + '</span>' + (a.editing ? '<span class="xs" style="color:var(--accent);font-weight:700">Modification · ' + esc(fmtDay(a.date)) + '</span>' : a.date !== todayIso() ? '<span class="xs muted">' + esc(fmtDay(a.date)) + '</span>' : '') + '</div><button type="button" class="btn sm" data-act="finishOpen">Terminer</button></header>';
   if (!a.entries.length) h += '<div class="empty">Ajoute les exercices au fur et à mesure de ta séance.</div>';
-  FOCUS = null; for (let i = 0; i < a.entries.length && !FOCUS; i++) { const k = a.entries[i].sets.findIndex(x => !x.done); if (k >= 0) FOCUS = {e:i, s:k}; }
+  FOCUS = nextFocus();
   a.entries.forEach((en, ei) => { h += entryCard(en, ei); });
   h += '<button type="button" class="btn ghost full" data-act="pickEx" data-ctx="live">+ Ajouter un exercice</button>';
   h += '<button type="button" class="linkbtn" style="color:var(--bad);align-self:center" data-act="abandon">' + (a.editing ? 'Annuler les modifications' : 'Abandonner la séance') + '</button>';
@@ -806,7 +815,8 @@ let FOCUS = null;
 function entryCard(en, ei){
   const ex = exById(en.exId); if (!ex) return '';
   const tg = en.target; const unit = ex.type === 'duration' ? ' s' : '';
-  let h = '<section class="card" style="padding:14px 12px;gap:10px" id="en' + ei + '">';
+  const ssl = ssLabel(ei);
+  let h = '<section class="card' + (ssl ? ' ss' : '') + '" style="padding:14px 12px;gap:10px" id="en' + ei + '">' + (ssl ? '<span class="ss-tag">' + ssl + (en.ss ? ' · enchaîne sans repos' : ' · puis repos') + '</span>' : '');
   h += '<div class="row" style="align-items:flex-start"><div class="grow stack-s" style="gap:2px"><span class="xs muted" style="font-weight:600;text-transform:uppercase;letter-spacing:.06em">' + ex.muscle + '</span><button type="button" class="big" style="font-size:22px;background:none;border:none;padding:0;text-align:left;color:var(--fg);text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:4px" data-act="exHist" data-e="' + ei + '">' + esc(ex.name) + '</button>' +
     (tg ? '<span class="small muted">Objectif ' + tg.sets + ' × ' + (ex.type === 'duration' ? tg.repMin + '–' + tg.repMax + ' s' : tg.repMin + '–' + tg.repMax) + ' · repos ' + fTime(tg.rest) + '</span>' : '') + (tg && tg.note ? '<button type="button" class="linkbtn" style="align-self:flex-start;padding:2px 0;font-size:13px" data-act="enNote" data-e="' + ei + '">Voir la note</button>' : '') + '</div>' +
     '<button type="button" class="icon-btn" style="width:40px;height:40px;border:none;background:transparent;color:var(--muted)" data-act="enMenu" data-e="' + ei + '" aria-label="Options de l\'exercice">' + ic('dots',20) + '</button></div>';
@@ -848,9 +858,10 @@ A.enMenu = el => { const ei = +el.dataset.e, en = S.active.entries[ei], ex = exB
   openSheet(() => '<h2>' + esc(ex.name) + '</h2>' +
     (ex.type === 'weight' ? '<button type="button" class="item" data-act="menuDo" data-do="warmup" data-e="' + ei + '"><span class="grow" style="font-weight:600">' + (hasWarm ? 'Retirer l\'échauffement' : 'Ajouter un échauffement') + '</span></button>' : '') +
     (ex.type === 'weight' && ex.bar ? '<button type="button" class="item" data-act="plates" data-e="' + ei + '"><span class="grow" style="font-weight:600">Disques à charger</span></button>' : '') +
+    (ei < S.active.entries.length - 1 ? '<button type="button" class="item" data-act="menuDo" data-do="enSS" data-e="' + ei + '"><span class="grow" style="font-weight:600">' + (en.ss ? 'Retirer le superset avec l\'exercice suivant' : 'Faire un superset avec l\'exercice suivant') + '</span></button>' : '') +
     '<button type="button" class="item" data-act="menuDo" data-do="enRm" data-e="' + ei + '" style="color:var(--bad)"><span class="grow" style="font-weight:600">Retirer l\'exercice de la séance</span></button><button type="button" class="btn sec full" data-act="close">Fermer</button>'); };
 A.menuDo = el => { closeSheet(); A[el.dataset.do](el); };
-A.enRm = el => { const i = +el.dataset.e; const en = S.active.entries.splice(i, 1)[0]; save(); render(); const ex = exById(en.exId); undoToast((ex ? ex.name : 'Exercice') + ' retiré', () => { if (S.active) S.active.entries.splice(i, 0, en); }); };
+A.enRm = el => { const i = +el.dataset.e; const en = S.active.entries.splice(i, 1)[0]; const E = S.active.entries; if (E.length && E[E.length-1].ss) E[E.length-1].ss = false; save(); render(); const ex = exById(en.exId); undoToast((ex ? ex.name : 'Exercice') + ' retiré', () => { if (S.active) S.active.entries.splice(i, 0, en); }); };
 A.enUnapply = el => { const en = S.active.entries[+el.dataset.e]; en.sets = en.sets.map((s, i) => s.done ? s : Object.assign({}, en.orig[i] || s)); en.applied = null; save(); render(); };
 A.decide = el => { S.active.entries[+el.dataset.e].decision = el.dataset.v; save(); render(); };
 A.setDone = el => {
@@ -874,7 +885,10 @@ A.setDone = el => {
   if (s.pr) toast('Nouveau record sur ' + ex.name);
   // repos
   const allDone = en.sets.filter(x => x.kind !== 'warm').every(x => x.done);
-  const rest = allDone ? S.active.transition : (en.target ? en.target.rest : 90);
+  const nf = nextFocus(); const [ga, gb] = groupBounds(ei); const inGroupNext = ga !== gb && nf && nf.e >= ga && nf.e <= gb && nf.e > ei;
+  const groupRest = ga !== gb ? Math.max(...S.active.entries.slice(ga, gb+1).map(e => e.target ? e.target.rest : 90)) : null;
+  const rest = inGroupNext ? 0 : (ga !== gb ? (nf && nf.e >= ga && nf.e <= gb ? groupRest : S.active.transition) : allDone ? S.active.transition : (en.target ? en.target.rest : 90));
+  if (inGroupNext) S.active.timer = null;
   if (rest > 0) S.active.timer = {end: Date.now() + rest*1000, total: rest, label: allDone ? 'Avant l\'exercice suivant' : 'Repos', rang:false};
   save(); render(); scrollFocus();
 };
@@ -926,7 +940,7 @@ A.finishDo = () => {
   const a = S.active; if (!FIN.date) { toast('Choisis une date'); return; }
   const entries = a.entries.filter(e => e.sets.some(isWork)).map(e => {
     const ex = exById(e.exId); const sets = e.sets.filter(s => s.done).map(s => { const o = {done:true}; if (ex.type === 'duration') o.t = s.t; else { o.r = s.r; if (ex.type === 'weight') o.w = s.w; else { o.mode = s.mode || 'bw'; o.add = s.mode === 'bw' ? '' : s.add; } } if (s.pr) o.pr = true; if (s.kind === 'warm') o.kind = 'warm'; return o; });
-    const ent = {exId:e.exId, sets, target:e.target, decision: e.decision || suggest(e) || 'keep', applied: e.applied || null};
+    const ent = {exId:e.exId, sets, target:e.target, decision: e.decision || suggest(e) || 'keep', applied: e.applied || null, ss: !!e.ss};
     ent.below = belowMin(ex, ent); ent.prs = sets.filter(s => s.pr && s.kind !== 'warm').length; return ent;
   });
   const sess = {id:a.id, date:FIN.date, templateId:a.templateId, name:a.name, color:a.color, start:a.start, end: a.editing ? (a.origEnd || Date.now()) : Date.now(), duration:FIN.duration, rpe:FIN.rpe, note:FIN.note, entries};
@@ -1021,7 +1035,7 @@ A.editSession = el => {
   const s = S.sessions.find(x => x.id === el.dataset.id); if (!s) return; const tp = s.templateId ? tplById(s.templateId) : null;
   S.active = {id:s.id, editing:s.id, date:s.date, templateId:s.templateId, name:s.name, color:s.color, transition: tp ? tp.transition || 120 : 120, start: Date.now(), origDuration:s.duration, origEnd:s.end, rpe:s.rpe, note:s.note || '', timer:null,
     entries: s.entries.map(e => { const ex = exById(e.exId); const last = lastEntry(e.exId, s.date, s.id); const sets = JSON.parse(JSON.stringify(e.sets));
-      return {exId:e.exId, sets, target:e.target, prev: last ? last.entry.sets.filter(isWork).map(x => setLabel(ex, x)) : [], applied:null, orig:[], decision:e.decision}; })};
+      return {exId:e.exId, sets, target:e.target, prev: last ? last.entry.sets.filter(isWork).map(x => setLabel(ex, x)) : [], applied:null, orig:[], decision:e.decision, ss:!!e.ss}; })};
   save(); closeSheet(); go('live');
 };
 
@@ -1041,6 +1055,20 @@ function recapSheet(id){
   if (ups.length) h += '<div class="card" style="padding:12px 14px;gap:4px"><span style="font-weight:800;color:var(--good)">↑ Charge augmentée la prochaine fois</span><span class="small">' + ups.map(esc).join(' · ') + '</span></div>';
   return h + '<button type="button" class="btn full" data-act="close">Fermer</button>';
 }
+
+/* ----- supersets ----- */
+function groupBounds(i){ const E = S.active.entries; let a = i, b = i; while (a > 0 && E[a-1].ss) a--; while (b < E.length - 1 && E[b].ss) b++; return [a, b]; }
+function nextFocus(){
+  const E = S.active ? S.active.entries : []; let i = 0;
+  while (i < E.length) { const [a, b] = groupBounds(i);
+    if (a === b) { const k = E[i].sets.findIndex(x => !x.done); if (k >= 0) return {e:i, s:k}; }
+    else { const mx = Math.max(...E.slice(a, b+1).map(e => e.sets.length));
+      for (let k = 0; k < mx; k++) for (let j = a; j <= b; j++) if (E[j].sets[k] && !E[j].sets[k].done) return {e:j, s:k}; }
+    i = b + 1; }
+  return null;
+}
+function ssLabel(ei){ const E = S.active.entries; const [a, b] = groupBounds(ei); if (a === b) return ''; let g = 0; for (let i = 0; i < a; ) { const [x, y] = groupBounds(i); if (x !== y) g++; i = y + 1; } return 'Superset ' + String.fromCharCode(65 + g) + (ei - a + 1); }
+A.enSS = el => { const en = S.active.entries[+el.dataset.e]; en.ss = !en.ss; save(); render(); };
 /* ================= CALENDRIER ================= */
 function viewCal(){
   const t = todayIso(); const ym = S.ui.calMonth || t.slice(0,7); const sel = S.ui.calSel || t;
@@ -1439,5 +1467,6 @@ A.month = el => { S.ui.month = Math.min(0, (S.ui.month||0) + (+el.dataset.d)); s
 /* ================= DÉMARRAGE ================= */
 load();
 render();
+setTimeout(hideSplash, 900);
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
 </script></body></html>
