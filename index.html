@@ -1,4 +1,4 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Série"><meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#0E0E10" media="(prefers-color-scheme: dark)"><link rel="apple-touch-icon" href="icon-180.png"><link rel="manifest" href="manifest.json"><style>html,body{margin:0}:root{padding-top:env(safe-area-inset-top,0px)}[hidden]{display:none!important}</style></head><body>
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="apple-mobile-web-app-title" content="Série"><meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#0E0E10" media="(prefers-color-scheme: dark)"><link rel="apple-touch-icon" href="icon-180.png"><link rel="manifest" href="manifest.json"><style>html,body{margin:0}[hidden]{display:none!important}</style></head><body>
 <title>Série</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap">
@@ -34,6 +34,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .app{max-width:560px;margin:0 auto;padding:16px 16px calc(110px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:18px}
+@media (display-mode: standalone){.app{padding-top:calc(28px + max(env(safe-area-inset-top,0px), 47px))}#layer .sheet{max-height:calc(100vh - max(env(safe-area-inset-top,0px), 47px) - 12px)}}
 .app.live{padding-bottom:calc(130px + env(safe-area-inset-bottom,0px))}
 h1{font-family:var(--font-display);font-size:30px;font-weight:800;letter-spacing:-.02em;margin:0;line-height:1.1;text-wrap:balance}
 h2{font-family:var(--font-display);font-size:20px;font-weight:800;letter-spacing:-.01em;margin:0}
@@ -930,7 +931,6 @@ function finishSheet(){
   const a = S.active; const done = a.entries.reduce((n, e) => n + e.sets.filter(isWork).length, 0); const empty = a.entries.filter(e => !e.sets.some(isWork)).length;
   let h = '<h2>' + (a.editing ? 'Enregistrer les modifications' : 'Terminer la séance') + '</h2><p class="muted" style="margin:0">' + done + ' séries validées' + (empty ? ' · ' + empty + ' exercice' + (empty>1?'s':'') + ' sans série validée ne ' + (empty>1?'seront':'sera') + ' pas enregistré' + (empty>1?'s':'') : '') + '.</p>';
   h += '<div class="grid2"><label class="field"><span>Date</span><input id="fd" type="date" class="inp" value="' + FIN.date + '" data-in="fin" data-f="date"></label><label class="field"><span>Durée (min)</span><input id="fdu" class="inp" inputmode="numeric" value="' + FIN.duration + '" data-in="fin" data-f="duration"></label></div>';
-  h += '<div class="stack-s"><span class="small" style="font-weight:600">Intensité ressentie : <span id="frl">' + FIN.rpe + '</span>/10</span><input id="frpe" type="range" min="1" max="10" step="1" value="' + FIN.rpe + '" data-in="fin" data-f="rpe" style="width:100%;accent-color:var(--accent)"><div class="row between xs muted"><span>Très facile</span><span>Maximal</span></div></div>';
   h += '<label class="field"><span>Note (facultatif)</span><textarea id="fn" class="inp" data-in="fin" data-f="note">' + esc(FIN.note) + '</textarea></label>';
   h += '<button type="button" class="btn full" data-act="finishDo"' + (done ? '' : ' disabled style="opacity:.5"') + '>Enregistrer la séance</button>' + (done ? '' : '<p class="small muted" style="margin:0">Valide au moins une série pour enregistrer.</p>') + '<button type="button" class="btn sec full" data-act="close">Continuer la séance</button>';
   return h;
@@ -953,7 +953,7 @@ A.abandon = () => { const a = S.active; S.active = null; save(); go('today'); if
 A.showSession = el => openSheet(sessionSheet, el.dataset.id);
 function sessionSheet(id){
   const s = S.sessions.find(x => x.id === id); if (!s) return '<p>Séance introuvable.</p>';
-  let h = '<div class="row"><span class="dot" style="width:12px;height:12px;background:' + s.color + '"></span><h2 class="grow">' + esc(s.name) + '</h2></div><span class="muted small">' + esc(fmtDay(s.date, {weekday:'long', day:'numeric', month:'long'})) + ' · ' + (s.duration||0) + ' min · intensité ' + (s.rpe||'–') + '/10 · ' + fN(sessionTonnage(s)/1000, 2) + ' t</span>';
+  let h = '<div class="row"><span class="dot" style="width:12px;height:12px;background:' + s.color + '"></span><h2 class="grow">' + esc(s.name) + '</h2></div><span class="muted small">' + esc(fmtDay(s.date, {weekday:'long', day:'numeric', month:'long'})) + ' · ' + (s.duration||0) + ' min · ' + fN(sessionTonnage(s)/1000, 2) + ' t</span>';
   if (s.note) h += '<p class="small" style="margin:0">' + esc(s.note) + '</p>';
   for (const e of s.entries) { const ex = exById(e.exId); if (!ex) continue;
     h += '<div class="card" style="padding:12px;gap:6px"><div class="row"><span class="grow" style="font-weight:700">' + esc(ex.name) + '</span>' + (e.decision === 'up' ? '<span class="badge" style="background:var(--good);color:#FFFFFF">↑ Monter</span>' : e.decision === 'down' ? '<span class="badge warn">↓ Baisser</span>' : '') + '</div><div class="small muted">' + e.sets.map(x => (x.kind === 'warm' ? 'É ' : '') + esc(setLabel(ex, x)) + (x.pr ? ' <span class="badge" style="font-size:10px;padding:1px 5px">PR</span>' : '')).join(' · ') + '</div></div>'; }
@@ -1333,6 +1333,7 @@ function viewExercise(){
   if (ex.type === 'duration') h += recTile('Durée max', fTime(R.maxT));
   else { const bs = bestSetEver(ex); if (bs) h += recTile('Meilleure série', esc(setLabel(ex, bs))); if (ex.type === 'weight') h += recTile('Charge max', fN(R.maxLoad,1) + ' kg'); else h += recTile('Lest max', R.maxAdd === null ? '–' : fSign(R.maxAdd,2) + ' kg'); h += recTile('Reps max', R.maxReps); h += recTile('Volume en 1 séance', fN(R.volume,0) + ' kg'); }
   h += '</div></section>';
+  h += exTotals(ex, H);
   const ups = H.filter(x => x.entry.applied === 'up'); const ok = ups.filter(x => !x.entry.below).length;
   if (ups.length) h += '<div class="alert good">' + ic('up',20) + '<span>' + ups.length + ' montée' + (ups.length>1?'s':'') + ' de charge, ' + ok + ' confirmée' + (ok>1?'s':'') + ' (objectif de reps tenu).' + (ups.length >= 3 && ok/ups.length < 0.6 ? ' Ton palier de ' + fN(ex.step,2) + ' est peut-être trop grand.' : '') + '</span></div>';
   const lastDec = H.length ? H[H.length-1].entry.decision : null;
@@ -1397,9 +1398,9 @@ function viewStats(){
   // charge hebdo
   const nW = Math.min(26, Math.ceil(daysBetween(pk === 'all' ? firstD : from, t) / 7) + 1);
   const buckets = []; let ws = weekStart(t);
-  for (let i = 0; i < nW; i++) { const we = addDays(ws, 6); let mu = 0, fo = 0; const sp = {}; for (const s of S.sessions) if (s.date >= ws && s.date <= we) mu += (s.duration||0)*(s.rpe||7); for (const a of S.activities) if (a.date >= ws && a.date <= we) { const v = (a.duration||0)*(a.rpe||7); fo += v; const k = a.kind || 'foot'; sp[k] = (sp[k]||0) + v; } buckets.unshift({ws, mu, fo, sp}); ws = addDays(ws, -7); }
-  const mx = Math.max(1, ...buckets.map(b => b.mu + b.fo)); const avgL = buckets.reduce((a,b) => a + b.mu + b.fo, 0) / buckets.length;
-  h += '<section class="card" style="padding:14px 12px"><div class="row between" style="align-items:baseline"><span class="small" style="font-weight:700">Charge d\'entraînement par semaine</span><span class="xs muted">durée × intensité</span></div>' + loadChart(buckets, mx) + '<div class="row wrap xs" style="gap:12px;color:var(--muted)"><span class="row" style="gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:var(--data)"></span>Muscu</span>' + Object.values(SPORTS).map(sp => '<span class="row" style="gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:' + sp.color + '"></span>' + sp.label + '</span>').join('') + '<span>moyenne ' + fN(avgL, 0) + ' / sem.</span></div></section>';
+  for (let i = 0; i < nW; i++) { const we = addDays(ws, 6); let mu = 0, fo = 0; const sp = {}; for (const s of S.sessions) if (s.date >= ws && s.date <= we) mu += 1; for (const a of S.activities) if (a.date >= ws && a.date <= we) { const v = 1; fo += v; const k = a.kind || 'foot'; sp[k] = (sp[k]||0) + v; } buckets.unshift({ws, mu, fo, sp}); ws = addDays(ws, -7); }
+  const mx = Math.max(4, ...buckets.map(b => b.mu + b.fo)); const avgL = buckets.reduce((a,b) => a + b.mu + b.fo, 0) / buckets.length;
+  h += '<section class="card" style="padding:14px 12px"><div class="row between" style="align-items:baseline"><span class="small" style="font-weight:700">Séances par semaine</span><span class="xs muted">muscu et sports</span></div>' + loadChart(buckets, mx) + '<div class="row wrap xs" style="gap:12px;color:var(--muted)"><span class="row" style="gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:var(--data)"></span>Muscu</span>' + Object.values(SPORTS).map(sp => '<span class="row" style="gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:' + sp.color + '"></span>' + sp.label + '</span>').join('') + '<span>moyenne ' + fN(avgL, 1) + ' séance' + (avgL >= 2 ? 's' : '') + ' / sem.</span></div></section>';
   // séries par muscle
   const sm = setsByMuscle(pk === 'all' ? firstD : from, t); const rows = MUSCLES.filter(mu => sm[mu] || (S.targets[mu] && S.targets[mu][0] > 0 && ['Pecs','Dos','Épaules','Biceps','Triceps','Quadriceps','Ischios'].includes(mu)));
   const maxS = Math.max(20, ...rows.map(mu => (sm[mu]||0)/weeks + 2), ...rows.map(mu => (S.targets[mu]||[0,0])[1] + 2));
@@ -1411,12 +1412,14 @@ function viewStats(){
   return h;
 }
 function loadChart(b, mx){
-  const VW = 340, VH = 130, PB = 18, gap = b.length > 14 ? 2 : 4; const bw = (VW - gap*(b.length-1)) / b.length;
-  let s = '<div class="chart"><svg viewBox="0 0 ' + VW + ' ' + VH + '" role="img" aria-label="Charge d\'entraînement par semaine, muscu et sports">';
-  b.forEach((x, i) => { const X = i*(bw+gap); const hm = x.mu/mx*(VH-PB-4), hf = x.fo/mx*(VH-PB-4); const y0 = VH - PB;
+  const VW = 340, VH = 130, PB = 18, PT = 16, gap = b.length > 14 ? 2 : 4; const bw = (VW - gap*(b.length-1)) / b.length; const H = VH - PB - PT;
+  let s = '<div class="chart"><svg viewBox="0 0 ' + VW + ' ' + VH + '" role="img" aria-label="Nombre de séances par semaine, muscu et sports">';
+  b.forEach((x, i) => { const X = i*(bw+gap); const y0 = VH - PB; const hm = x.mu/mx*H;
     if (hm) s += '<rect x="' + X.toFixed(1) + '" y="' + (y0-hm).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hm.toFixed(1) + '" rx="2" style="fill:var(--data)"/>';
-    let yy = y0 - hm - (hm ? 1.5 : 0); for (const [k, v] of Object.entries(x.sp || {})) { const hh = v/mx*(VH-PB-4); if (!hh) continue; yy -= hh; s += '<rect x="' + X.toFixed(1) + '" y="' + yy.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hh.toFixed(1) + '" rx="2" style="fill:' + (SPORTS[k] || SPORTS.foot).color + '"/>'; yy -= 1.5; }
-    if (!hm && !hf) s += '<rect x="' + X.toFixed(1) + '" y="' + (y0-2) + '" width="' + bw.toFixed(1) + '" height="2" style="fill:var(--line)"/>'; });
+    let yy = y0 - hm - (hm ? 1.5 : 0); for (const [k, v] of Object.entries(x.sp || {})) { const hh = v/mx*H; if (!hh) continue; yy -= hh; s += '<rect x="' + X.toFixed(1) + '" y="' + yy.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + hh.toFixed(1) + '" rx="2" style="fill:' + (SPORTS[k] || SPORTS.foot).color + '"/>'; yy -= 1.5; }
+    const tot = x.mu + x.fo;
+    if (!tot) s += '<rect x="' + X.toFixed(1) + '" y="' + (y0-2) + '" width="' + bw.toFixed(1) + '" height="2" style="fill:var(--line)"/>';
+    else if (b.length <= 14) s += '<text x="' + (X + bw/2).toFixed(1) + '" y="' + (yy - 1).toFixed(1) + '" text-anchor="middle" style="fill:var(--muted);font-size:10px;font-weight:700">' + tot + '</text>'; });
   s += '<text x="0" y="' + (VH-4) + '" style="fill:var(--faint);font-size:10px">' + esc(fmtDay(b[0].ws, {day:'numeric', month:'short'})) + '</text><text x="' + VW + '" y="' + (VH-4) + '" text-anchor="end" style="fill:var(--faint);font-size:10px">cette semaine</text>';
   return s + '</svg></div>';
 }
@@ -1468,5 +1471,26 @@ A.month = el => { S.ui.month = Math.min(0, (S.ui.month||0) + (+el.dataset.d)); s
 load();
 render();
 setTimeout(hideSplash, 900);
+
+/* ----- totaux d'un exercice ----- */
+function sumEx(ex, L){
+  const r = {sessions:L.length, sets:0, reps:0, ton:0, time:0};
+  for (const x of L) for (const s of x.entry.sets) { if (!isWork(s)) continue; const i = setInfo(ex, s, x.date); r.sets++; if (ex.type === 'duration') r.time += i.t; else { r.reps += i.reps; r.ton += i.load * i.reps; } }
+  return r;
+}
+function fTon(kg){ return kg >= 1000 ? fN(kg/1000, 1) + ' t' : fN(kg, 0) + ' kg'; }
+function fLong(sec){ const h = Math.floor(sec/3600), m = Math.round((sec%3600)/60); return h ? h + ' h ' + pad(m) : m + ' min'; }
+function exRank(exId){
+  const cnt = {}; for (const ss of S.sessions) for (const e of ss.entries) { const n = e.sets.filter(isWork).length; if (n) cnt[e.exId] = (cnt[e.exId]||0) + n; }
+  const ids = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a]); return {rank: ids.indexOf(exId) + 1, total: ids.length};
+}
+function exTotals(ex, H){
+  if (!H.length) return '';
+  const A = sumEx(ex, H), R = exRank(ex.id);
+  const t = (l, v, sub) => '<div class="tile" style="background:var(--surface);padding:12px"><span class="xs muted">' + l + '</span><span class="big" style="font-size:24px">' + v + '</span>' + (sub ? '<span class="xs muted">' + sub + '</span>' : '') + '</div>';
+  const rank = t('Classement', R.rank + ' <span style="font-size:15px;font-weight:600;color:var(--muted)">sur ' + R.total + '</span>', 'par nombre de séries');
+  const tiles = ex.type === 'duration' ? t('Séries', fN(A.sets, 0)) + t('Temps total', fLong(A.time)) + rank : t('Séries', fN(A.sets, 0)) + t('Reps', fN(A.reps, 0)) + rank + t('Poids total', fTon(A.ton), ex.type === 'bodyweight' ? 'poids du corps + lest' : '');
+  return '<section class="stack-s"><span class="eyebrow">Depuis le début</span><div class="grid2">' + tiles + '</div><span class="xs muted">' + A.sessions + ' séance' + (A.sessions > 1 ? 's' : '') + ' depuis le ' + esc(fmtDay(H[0].date, {day:'numeric', month:'long', year:'numeric'})) + '</span></section>';
+}
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function(){});
 </script></body></html>
